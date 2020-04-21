@@ -1,0 +1,42 @@
+int led[] = {3,4,5,6,7,8,9,10};
+
+int lut[4][8] = {
+  {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80},
+  {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01},
+  {0x18, 0x24, 0x42, 0x81, 0x18, 0x24, 0x42, 0x81},
+  {0x81, 0x42, 0x24, 0x18, 0x81, 0x42, 0x24, 0x18}
+  };
+
+#define button 10
+
+volatile int state = 0;
+
+void disp(unsigned char data){
+  for(int i=0;i<8;i++) digitalWrite(led[i], data&(1<<i));
+}
+
+unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
+unsigned long debounceDelay = 200;
+
+void pinISR(){
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    state++;
+    lastDebounceTime = millis();
+  }
+}
+
+void setup() {
+  for(int i=0; i<8 ;i++) pinMode(led[i],OUTPUT);
+  pinMode(button,INPUT);
+  attachInterrupt(digitalPinToInterrupt(2),pinISR,RISING);
+  interrupts();
+}
+
+int i = 0;
+void loop() {
+  if(state > 3) state = 0;
+  disp(lut[state][i]);
+  delay(200);
+  i++;
+  if(i>7) i = 0;
+}
